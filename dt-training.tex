@@ -1,0 +1,115 @@
+% SPDX-License-Identifier: CC-BY-NC-SA-3.0
+
+% Copyright 2022 KUNBUS GmbH
+
+\documentclass[aspectratio=169]{beamer}
+
+\usepackage{minted}
+\usepackage{xcolor}
+\definecolor{LightGray}{gray}{0.9}
+
+\usetheme {default}
+\setbeamertemplate{navigation symbols}{}
+
+\AtBeginSection[]{
+  \begin{frame}
+  \vfill
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+    \usebeamerfont{title}\insertsectionhead\par%
+  \end{beamercolorbox}
+  \vfill
+  \end{frame}
+}
+
+\graphicspath{{images/}{\main/images/}}
+
+% Title page details
+\title {Introduction to device trees}
+\subtitle{and device tree overlays}
+%\author{latex-beamer.com}
+%\institute{KUNBUS GmbH}
+%\date{\today}
+
+% Image Logo
+\logo{\includegraphics[width=2.5cm]{kunbus-logo.png}} 
+
+\begin{document}
+
+\begin{frame}
+% Print the title page as the first slide
+\titlepage
+\end{frame}
+
+% Presentation outline
+\begin{frame}{Outline}
+    \tableofcontents
+\end{frame}
+
+\section{Why do we need device trees?}
+% Lists in beamer (Itemize)
+\begin{frame}{Discoverable Hardware}
+\begin{itemize}
+    \item Devices we can discover and identify
+    \item Well-known examples:
+    \begin{itemize}
+    	\item USB devices
+    	\item PCI(e) devices
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Discoverable Hardware}
+\begin{block}{USB}
+\begin{enumerate}
+	\item Scan bus
+	\item Enumerate devices
+	\item Identify devices
+	\item Bind driver to devices
+\end{enumerate}
+\end{block}
+\end{frame}
+
+\begin{frame}{Non-Discoverable Hardware}
+\begin{itemize}
+	\item Devices which have no way to communicate\\
+	(LEDs, Buttons, \ldots)
+	\item Devices which can't identify them selfs\\
+	(many I$^2$C and SPI devices)
+	\item RAM, SRAM, ROM
+    \item Other memory mapped devices (most controllers in ARM SoCs)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Non-Discoverable Hardware}{Memory Mapped I/O}
+\begin{figure}
+    \centering
+    \begin{overprint}
+    \includegraphics<1>[width=\textwidth,height=0.6\textheight,keepaspectratio]{mmio_01}
+    \includegraphics<2>[width=\textwidth,height=0.6\textheight,keepaspectratio]{mmio_02}
+    \includegraphics<3>[width=\textwidth,height=0.6\textheight,keepaspectratio]{mmio_03}
+    \end{overprint}
+\end{figure}
+\end{frame}
+
+\section{What is a device tree?}
+\begin{frame}{What is a device tree \ldots}
+A device tree is an abstract hardware description.
+\begin{itemize}
+    \item This description should contain all relevent information about the hardware.
+    \item Every device has its own device tree entry (node)
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{\ldots and how is it used by Linux?}
+\begin{enumerate}
+    \item The bootloader loads a so called flattend device tree (fdt) blob
+    \item It copies the fdt into the memory
+    \item It might manipulate devictree entries (typlically memory size is added)
+    \item The bootloader starts the kernel and gives it a pointer to the device tree
+    \item The kernel walks through the device tree and loads the matching drivers for the device tree entries
+    \item The drivers read additional configuration parameters from the device tree entries
+\end{enumerate}
+\end{frame}
+\end{document}
