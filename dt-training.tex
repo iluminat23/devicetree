@@ -311,4 +311,198 @@ status = "disabled";
 \end{columns}
 \end{frame}
 
+\begin{frame}[fragile]{A full example device tree node}{\sectiontitle}
+    \begin{minted}[fontsize=\tiny]{dts}
+uart0: serial@7e201000 {
+	compatible = "arm,pl011", "arm,primecell";
+	reg = <0x7e201000 0x200>;
+	interrupts = <2 25>;
+	clocks = <&clocks BCM2835_CLOCK_UART>,
+		 <&clocks BCM2835_CLOCK_VPU>;
+	clock-names = "uartclk", "apb_pclk";
+	arm,primecell-periphid = <0x00241011>;
+};
+
+...
+
+spi: spi@7e204000 {
+	compatible = "brcm,bcm2835-spi";
+	reg = <0x7e204000 0x200>;
+	interrupts = <2 22>;
+	clocks = <&clocks BCM2835_CLOCK_VPU>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "disabled";
+};
+    \end{minted}
+\end{frame}
+
+\newsection{How is a device tree processed}
+\begin{frame}{Device tree compilation}{\sectiontitle}
+\begin{itemize}
+    \item device tree compiler (dtc)
+    \item dts and dtsi $\rightarrow$ dtb
+    \item dtb is also called flattened device tree (fdt)
+    \item binary (big-endian) format
+    \item dtb does need almost no parsing
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Bootloader}{\sectiontitle}
+\begin{itemize}
+    \item loads the dtb into memory
+    \item modifies the device tree in memory
+    \begin{itemize}
+        \item adds/modifies the RAM size
+        \item enables (or disables) nodes
+        \item adds nodes
+    \end{itemize}
+    \item loads the kernel
+    \item gives the kernel the location (address) of the device tree
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Linux kernel}{\sectiontitle}
+\begin{itemize}
+    \item reads mandatory properties
+    \item walks through all device tree nodes
+    \begin{itemize}
+        \item checks node \verb|status|
+        \item matches the \verb|compatible|s with drivers
+        \item probes the drivers with the corresponding node
+    \end{itemize}
+    \item driver reads further configurations from the node
+\end{itemize}
+\end{frame}
+
+
+\newsection{Device tree overlays}
+\begin{frame}{Why do we need overlays?}{\sectiontitle}
+\begin{itemize}
+    \item a device tree is static*
+    \begin{itemize}
+        \item no hot plug*
+        \item no H/W variants*
+    \end{itemize}
+    \item one device tree describes a single device*
+    \begin{itemize}
+        \item different device types need there own device tree*
+    \end{itemize}
+\end{itemize}
+\footnotesize{*there are exceptions to these statements}
+\end{frame}
+
+\begin{frame}{Device tree overlay (intended) use cases}{\sectiontitle}
+\begin{itemize}
+    \item BeagleBone capes
+    \item Raspberry Pi hats
+    \item plug-in boards with a wide variety devices
+    \begin{itemize}
+        \item real-time clock (RTC)
+        \item fan
+        \item LoRa
+        \item tpm
+        \item \ldots
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{How does an overly look like?}{\sectiontitle}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{minted}[fontsize=\tiny]{dts}
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	fragment@1 {
+		target = <&spidev1>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@2 {
+		target = <&spi0>;
+		__overlay__ {
+			/* needed to avoid dtc warning */
+			#address-cells = <1>;
+			#size-cells = <0>;
+			slb9670: slb9670@1 {
+				compatible = "infineon,slb9670";
+				reg = <1>;	/* CE1 */
+				#address-cells = <1>;
+				#size-cells = <0>;
+				spi-max-frequency = <32000000>;
+        \end{minted}
+        \column{0.5\textwidth}
+        \begin{block}{fragment@0}
+            An overlay is split into fragments. Every fragment node needs a unique name.
+            \begin{minted}[fontsize=\small, firstline=2]{dts}
+/ { //not shown on the slide
+fragment@0 {
+            \end{minted}
+        \end{block}
+        \begin{block}{target}
+            The \verb|target| property references the node which should be overlayed.
+            \begin{minted}[fontsize=\small, firstline=2]{dts}
+/ { node { //not shown on the slide
+target = <&spi0>;
+            \end{minted}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{How does an overly look like?}{\sectiontitle}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{minted}[fontsize=\tiny]{dts}
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	fragment@1 {
+		target = <&spidev1>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@2 {
+		target = <&spi0>;
+		__overlay__ {
+			/* needed to avoid dtc warning */
+			#address-cells = <1>;
+			#size-cells = <0>;
+			slb9670: slb9670@1 {
+				compatible = "infineon,slb9670";
+				reg = <1>;	/* CE1 */
+				#address-cells = <1>;
+				#size-cells = <0>;
+				spi-max-frequency = <32000000>;
+        \end{minted}
+        \column{0.5\textwidth}
+        \begin{block}{\_\_overlay\_\_}
+            The \verb|__overlay__| node contains the overlaying content. Which
+            can be new properties or nodes. It is also possible to overwrite
+            properties.
+            \begin{minted}[fontsize=\small, firstline=2]{dts}
+/ { //not shown on the slide
+__overlay__ {
+            \end{minted}
+        \end{block}
+    \end{columns}
+\end{frame}
 \end{document}
