@@ -498,6 +498,7 @@ target = <&spi0>;
             The \verb|__overlay__| node contains the overlaying content. Which
             can be new properties or nodes. It is also possible to overwrite
             properties.
+            It is \emph{not} possible to delete nodes or properties.
             \begin{minted}[fontsize=\small, firstline=2]{dts}
 / { //not shown on the slide
 __overlay__ {
@@ -505,4 +506,41 @@ __overlay__ {
         \end{block}
     \end{columns}
 \end{frame}
+
+\begin{frame}{How is a device tree overlay processed}{\sectiontitle}
+	\begin{itemize}
+	    \item device tree compiler (dtc)
+	   	\item dts $\rightarrow$ dtbo
+		\item dtb is loaded by the bootloader
+		\item dtb is loaded at runtime
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Overlay loaded by the bootloader}{\sectiontitle}
+	\begin{enumerate}
+		\item The bootloader loads the devicetree.
+		\item The bootloader loads the overlay.
+		\item The bootloader modifies the devicetree with the values from the overlay.
+		\item The bootloder starts the operating system with the modified devicetree.
+		\item The operating system has no knowledge of the overlay.
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}{Overlay loaded at runtime}{\sectiontitle}
+	\begin{enumerate}
+		\item The operating system is running with the values from the devicetree (no
+			  overlay).
+		\item The overlay is loaded into the operating system.
+		\item The operating system modifies its internal representation of the device tree.
+		\item The operating system runs its probe functions for newly added nodes.
+		\item Some changes can't be applied as they can't be changed at runtime.
+		\begin{itemize}
+			\item changing the device address of a already used devices
+			\item adding a device which is not runtime probable
+			\item disabling a device which is already running
+			\item the device representation might be different (other device name)
+		\end{itemize}
+	\end{enumerate}
+\end{frame}
+
 \end{document}
